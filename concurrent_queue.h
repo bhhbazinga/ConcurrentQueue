@@ -58,8 +58,6 @@ class ConcurrentQueue {
 
   // Return succeed of head.
   RegularNode* DequeueNode(HazardPointer& hp);
-  // Acquire head or tail and mark it as hazard.
-  Node* AcquireSafeNode(std::atomic<Node*>& atomic_node, HazardPointer& hp);
   // Get safe node and its next, ensure next is the succeed of node
   // and both pointer are safety.
   // REQUIRE: atomic_node is head_ or tail_.
@@ -113,21 +111,6 @@ class ConcreteReclaimer : public Reclaimer {
     return reclaimer;
   }
 };
-
-template <typename T>
-typename ConcurrentQueue<T>::Node* ConcurrentQueue<T>::AcquireSafeNode(
-    std::atomic<Node*>& atomic_node, HazardPointer& hp) {
-  ConcreteReclaimer<T>& reclaimer = ConcreteReclaimer<T>::GetInstance();
-  Node* node = atomic_node.load(std::memory_order_acquire);
-  Node* temp;
-  do {
-    hp.UnMark();
-    temp = node;
-    hp = HazardPointer(&reclaimer, node);
-    node = atomic_node.load(std::memory_order_acquire);
-  } while (temp != node);
-  return node;
-}
 
 template <typename T>
 void ConcurrentQueue<T>::AcquireSafeNodeAndNext(std::atomic<Node*>& atomic_node,
