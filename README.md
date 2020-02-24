@@ -23,4 +23,4 @@ size_t size() const;
 ```
 ## Reference
 [1]Hazard Pointers: Safe Memory Reclamation for Lock-Free Objects. Maged M. Michael\
-[2]Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms. Maged M. Michael Michael L. Scott\
+[2]Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms. Maged M. Michael Michael L. Scott
