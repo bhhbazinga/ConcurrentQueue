@@ -72,7 +72,7 @@ class ConcurrentQueue {
 
   struct Node {
     Node() : next(nullptr) {}
-    ~Node() {}
+    virtual ~Node() = default;
 
     virtual void Release() { delete this; }
     Node* get_next() const { return next.load(std::memory_order_acquire); }
@@ -83,6 +83,7 @@ class ConcurrentQueue {
   struct RegularNode : Node {
     template <typename... Args>
     RegularNode(Args&&... args) : value(std::forward<Args>(args)...) {}
+    ~RegularNode() override = default;
 
     void Release() override { delete this; }
 
