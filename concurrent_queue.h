@@ -22,11 +22,12 @@ class ConcurrentQueue {
         size_(0) {}
 
   ~ConcurrentQueue() {
-    HazardPointer hp;
-    while (DequeueNode(hp) != nullptr) {
-      hp.UnMark();
+    Node* p = head_.load(std::memory_order_acquire);
+    while(p != nullptr) {
+      Node* tmp = p;
+      p = p->next.load(std::memory_order_acquire);
+      tmp->Release();
     }
-    delete head_.load(std::memory_order_acquire);
   }
 
   ConcurrentQueue(const ConcurrentQueue&) = delete;
@@ -56,8 +57,6 @@ class ConcurrentQueue {
   Node* get_head() const { return head_.load(std::memory_order_acquire); }
   Node* get_tail() const { return tail_.load(std::memory_order_acquire); }
 
-  // Return succeed of head.
-  RegularNode* DequeueNode(HazardPointer& hp);
   // Get safe node and its next, ensure next is the succeed of node
   // and both pointer are safety.
   // REQUIRE: atomic_node is head_ or tail_.
@@ -174,26 +173,17 @@ void ConcurrentQueue<T>::Emplace(Args&&... args) {
 
 template <typename T>
 bool ConcurrentQueue<T>::Dequeue(T& value) {
-  HazardPointer hp;
-  RegularNode* value_node = DequeueNode(hp);
-  if (nullptr == value_node) return false;
-  value = std::move(value_node->value);
-  return true;
-}
-
-template <typename T>
-typename ConcurrentQueue<T>::RegularNode* ConcurrentQueue<T>::DequeueNode(
-    HazardPointer& next_hp) {
+  HazardPointer head_hp;
+  HazardPointer next_hp;
   Node* head;
   Node* next;
   Node* tail;
-  HazardPointer head_hp;
   while (true) {
     AcquireSafeNodeAndNext(head_, &head, &next, head_hp, next_hp);
     tail = get_tail();
     if (head != get_head()) continue;  // Are head, tail, and next consistent?
     if (head == tail) {                // Is queue empty or tail falling behind?
-      if (nullptr == next) return nullptr;  // Queue is empty;
+      if (nullptr == next) return false;  // Queue is empty;
       // Tail is falling behind. Try to advance it.
       tail_.compare_exchange_weak(tail, next);
     } else {
@@ -205,7 +195,9 @@ typename ConcurrentQueue<T>::RegularNode* ConcurrentQueue<T>::DequeueNode(
   auto& reclaimer = ConcreteReclaimer<T>::GetInstance();
   reclaimer.ReclaimLater(head, ConcurrentQueue<T>::OnDeleteNode);
   reclaimer.ReclaimNoHazardPointer();
-  return static_cast<RegularNode*>(next);
+  if (nullptr == next) return false;
+  value = std::move(static_cast<RegularNode*>(next)->value);
+  return true;
 }
 
 #endif  // CONCURRENT_QUEUE_H
