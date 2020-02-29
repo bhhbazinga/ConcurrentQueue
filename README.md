@@ -17,7 +17,7 @@ make && ./test
 ```C++
 void Enqueue(const T& data);
 void Enqueue(T&& data);
-void Emplace(Arg&&.. args);
+void Emplace(Arg&&... args);
 bool Dequeue(T& data);
 size_t size() const;
 ```
