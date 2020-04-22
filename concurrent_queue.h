@@ -195,7 +195,6 @@ bool ConcurrentQueue<T>::Dequeue(T& value) {
   auto& reclaimer = ConcreteReclaimer<T>::GetInstance();
   reclaimer.ReclaimLater(head, ConcurrentQueue<T>::OnDeleteNode);
   reclaimer.ReclaimNoHazardPointer();
-  if (nullptr == next) return false;
   value = std::move(static_cast<RegularNode*>(next)->value);
   return true;
 }
