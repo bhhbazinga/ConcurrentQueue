@@ -167,7 +167,7 @@ int main(int argc, char const* argv[]) {
     maxElements = elements[i];
     float avg = static_cast<float>(elements2timespan[maxElements][0]) / 10.0f;
     std::cout << maxElements
-              << " elements dequeue concurrently, average timespan=" << avg
+              << " elements queue concurrently, average timespan=" << avg
               << "ms"
               << "\n";
     avg = static_cast<float>(elements2timespan[maxElements][1]) / 10.0f;
@@ -177,7 +177,7 @@ int main(int argc, char const* argv[]) {
               << "\n";
     avg = static_cast<float>(elements2timespan[maxElements][2]) / 10.0f;
     std::cout << maxElements
-              << " elements dequeue and dequeue concurrently, average timespan="
+              << " elements queue and dequeue concurrently, average timespan="
               << avg << "ms"
               << "\n";
     std::cout << "\n";
